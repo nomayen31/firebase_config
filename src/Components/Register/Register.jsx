@@ -1,0 +1,205 @@
+import React, { useState } from "react";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+// Icons
+import { HiOutlineEye, HiOutlineEyeOff } from "react-icons/hi";
+import auth from "../../Firebase .config";
+
+const Register = () => {
+  const [errorMessage, setError] = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const handleRegister = (e) => {
+    e.preventDefault();
+
+    const email = e.target.email.value.trim();
+    const password = e.target.password.value;
+    const confirmPassword = e.target.confirmPassword.value;
+
+    setError("");
+
+    // length check (6) + policy check (8+)
+    if (password.length < 6) {
+      setError("Password should be at least 6 characters long.");
+      return;
+    }
+
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      setError(
+        "Password must be ≥ 8 chars and include uppercase, lowercase, number, and special character."
+      );
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    createUserWithEmailAndPassword(auth, email, password)
+      .then((result) => {
+        console.log(result.user);
+        toast.success("Account created successfully! 🎉");
+        e.target.reset();
+      })
+      .catch((error) => {
+        console.error(error);
+        setError(error.message);
+        toast.error(error.message);
+      });
+  };
+
+  return (
+    <section className="bg-gray-50 dark:bg-gray-900">
+      <div className="flex flex-col items-center justify-center px-6 py-8 mx-auto md:h-screen lg:py-0">
+        <div className="w-full bg-white rounded-2xl shadow border border-gray-100 md:mt-0 sm:max-w-md xl:p-0 dark:bg-gray-800 dark:border-gray-700">
+          <div className="p-6 space-y-6 sm:p-8">
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+              Create an account
+            </h1>
+
+            <form className="space-y-5" onSubmit={handleRegister}>
+              {/* Email */}
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                >
+                  Your email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  id="email"
+                  placeholder="name@company.com"
+                  required
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-primary-600 focus:border-primary-600 block w-full p-3 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                />
+              </div>
+
+              {/* Password */}
+              <div>
+                <label
+                  htmlFor="password"
+                  className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                >
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPass ? "text" : "password"}
+                    name="password"
+                    id="password"
+                    placeholder="••••••••"
+                    required
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-primary-600 focus:border-primary-600 block w-full p-3 pr-12 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass((s) => !s)}
+                    aria-label={showPass ? "Hide password" : "Show password"}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"
+                  >
+                    {showPass ? (
+                      <HiOutlineEyeOff className="w-5 h-5" />
+                    ) : (
+                      <HiOutlineEye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  Must be ≥ 8 chars and include uppercase, lowercase, number, and special character.
+                </p>
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label
+                  htmlFor="confirm-password"
+                  className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                >
+                  Confirm password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirm ? "text" : "password"}
+                    name="confirmPassword"
+                    id="confirm-password"
+                    placeholder="••••••••"
+                    required
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-primary-600 focus:border-primary-600 block w-full p-3 pr-12 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm((s) => !s)}
+                    aria-label={showConfirm ? "Hide confirm password" : "Show confirm password"}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"
+                  >
+                    {showConfirm ? (
+                      <HiOutlineEyeOff className="w-5 h-5" />
+                    ) : (
+                      <HiOutlineEye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {/* Terms */}
+              <div className="flex items-start">
+                <div className="flex items-center h-5">
+                  <input
+                    id="terms"
+                    type="checkbox"
+                    required
+                    className="w-4 h-4 border border-gray-300 rounded bg-gray-50 focus:ring-2 focus:ring-primary-300 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                </div>
+                <div className="ml-3 text-sm">
+                  <label htmlFor="terms" className="font-light text-gray-600 dark:text-gray-300">
+                    I accept the{" "}
+                    <a className="font-medium text-primary-600 hover:underline" href="#">
+                      Terms and Conditions
+                    </a>
+                  </label>
+                </div>
+              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                className="w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-xl text-sm px-5 py-3 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 transition"
+              >
+                Create an account
+              </button>
+
+              {/* Inline error */}
+              {errorMessage && (
+                <p className="text-red-600 text-sm bg-red-50 rounded-lg px-3 py-2">
+                  {errorMessage}
+                </p>
+              )}
+
+              {/* Helper login link */}
+              <p className="text-sm font-light text-gray-500 dark:text-gray-400">
+                Already have an account?{" "}
+                <a href="#" className="font-medium text-primary-600 hover:underline">
+                  Login here
+                </a>
+              </p>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      {/* Toasts */}
+      <ToastContainer position="top-right" autoClose={3000} />
+    </section>
+  );
+};
+
+export default Register;
