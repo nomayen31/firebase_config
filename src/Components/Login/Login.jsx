@@ -1,5 +1,5 @@
-import { signInWithEmailAndPassword } from "firebase/auth";
-import React, { useState } from "react";
+import { sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth";
+import React, { useRef, useState } from "react";
 import { HiOutlineEye, HiOutlineEyeOff } from "react-icons/hi";
 import { Link } from "react-router-dom";
 import auth from "../../Firebase .config";
@@ -7,26 +7,45 @@ import { toast, ToastContainer } from "react-toastify";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const [loginError, setLoginError] = useState('')
+  const [loginError, setLoginError] = useState("");
+  const emailref = useRef()
+  const handleForgetPassword = () =>{
+    const email = emailref.current.value;
+    if (!email) {
+      console.log("Please provide a valid email address");
+    }else{
+      sendPasswordResetEmail(auth, email)
+      .then(()=>{
+        alert("please check Your email")
+      })
+      .catch(error=>{
+        console.log(error);
+        
+      })
+    }
+    
+  }
   const handleLogin = (e) => {
     e.preventDefault();
     const form = e.currentTarget;
     const email = form.email.value;
     const password = form.password.value;
-    setLoginError('')
+    setLoginError("");
     console.log(email, password);
     signInWithEmailAndPassword(auth, email, password)
-    .then((result )=>{
-      console.log(result );
-       toast.success("Account Login successfully! 🎉");
-       form.reset();
-
-    })
-    .catch(error =>{
-      console.log(error);
-      setLoginError(error.message)
-    })
-    
+      .then((result) => {
+        console.log(result);
+        if (!result.user.emailVerified) {
+          setLoginError("Please verify your email address");
+        } else {
+          toast.success("Account Login successfully! 🎉");
+          form.reset();
+        }
+      })
+      .catch((error) => {
+        console.log(error);
+        setLoginError(error.message);
+      });
   };
 
   return (
@@ -48,6 +67,7 @@ const Login = () => {
             <input
               type="email"
               id="email"
+              ref={emailref}
               name="email"
               placeholder="name@example.com"
               required
@@ -109,19 +129,27 @@ const Login = () => {
           >
             Sign In
           </button>
-           {/* Inline error */}
-              {loginError && (
-                <p className="text-red-600 text-sm bg-red-50 rounded-lg px-3 py-2">
-                  {loginError}
-                </p>
-              )}
-
+          {/* Inline error */}
+          {loginError && (
+            <p className="text-red-600 text-sm bg-red-50 rounded-lg px-3 py-2">
+              {loginError}
+            </p>
+          )}
+          <div className="flex justify-center">
+            <Link
+            onClick={handleForgetPassword}
+            to=''
+              className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+            >
+              Forgot Password?
+            </Link>
+          </div>
 
           {/* Extra links */}
           <p className="text-sm text-center text-gray-500 dark:text-gray-400">
             Don’t have an account?{" "}
             <Link
-              to="/register"
+    to='/register'              
               className="font-medium text-blue-600 hover:underline dark:text-blue-400"
             >
               Register

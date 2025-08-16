@@ -1,5 +1,9 @@
 import React, { useState } from "react";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  sendEmailVerification,
+  updateProfile,
+} from "firebase/auth";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { HiOutlineEye, HiOutlineEyeOff } from "react-icons/hi";
@@ -17,14 +21,26 @@ const Register = () => {
     setError("");
 
     const form = e.currentTarget;
+    const name = form.name.value.trim();
+    const photoURL = form.photoURL.value.trim();
     const email = form.email.value.trim();
     const password = form.password.value;
     const confirmPassword = form.confirmPassword.value;
     const terms = form.terms.checked;
 
-    // --- Client-side validation (early returns) ---
+    // --- Client-side validation ---
     if (!terms) {
       setError("Please accept the Terms and Conditions.");
+      return;
+    }
+
+    if (!name) {
+      setError("Please enter your name.");
+      return;
+    }
+
+    if (!photoURL) {
+      setError("Please enter a photo URL.");
       return;
     }
 
@@ -55,12 +71,23 @@ const Register = () => {
         email,
         password
       );
-      console.log("Created user:", user);
+
+      // Update profile with display name + photo URL
+      await updateProfile(user, {
+        displayName: name,
+        photoURL: photoURL,
+      });
+
       toast.success("Account created successfully! 🎉");
+
+      // Send verification email
+      await sendEmailVerification(auth.currentUser);
+      console.log("Verification email sent");
       form.reset();
+
+     
     } catch (err) {
       console.error(err);
-      // Show code when available (e.g., auth/email-already-in-use)
       const msg = err?.code
         ? `${err.code.replace("auth/", "")}: ${err.message}`
         : err?.message || "Something went wrong.";
@@ -81,13 +108,49 @@ const Register = () => {
             </h1>
 
             <form className="space-y-5" onSubmit={handleRegister} noValidate>
+              {/* Name */}
+              <div>
+                <label
+                  htmlFor="name"
+                  className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                >
+                  Your Name
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  id="name"
+                  placeholder="John Doe"
+                  required
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-primary-600 focus:border-primary-600 block w-full p-3 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                />
+              </div>
+
+              {/* Photo URL */}
+              <div>
+                <label
+                  htmlFor="photoURL"
+                  className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
+                >
+                  Photo URL
+                </label>
+                <input
+                  type="url"
+                  name="photoURL"
+                  id="photoURL"
+                  placeholder="https://example.com/photo.jpg"
+                  required
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-primary-600 focus:border-primary-600 block w-full p-3 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                />
+              </div>
+
               {/* Email */}
               <div>
                 <label
                   htmlFor="email"
                   className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                 >
-                  Your email
+                  Your Email
                 </label>
                 <input
                   type="email"
@@ -141,7 +204,7 @@ const Register = () => {
                   htmlFor="confirm-password"
                   className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
                 >
-                  Confirm password
+                  Confirm Password
                 </label>
                 <div className="relative">
                   <input
@@ -156,9 +219,7 @@ const Register = () => {
                     type="button"
                     onClick={() => setShowConfirm((s) => !s)}
                     aria-label={
-                      showConfirm
-                        ? "Hide confirm password"
-                        : "Show confirm password"
+                      showConfirm ? "Hide confirm password" : "Show confirm password"
                     }
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"
                   >
@@ -202,7 +263,7 @@ const Register = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full text-white bg-primary-600 hover:bg-primary-700 focus:ring-4 focus:outline-none focus:ring-primary-300 font-medium rounded-xl text-sm px-5 py-3 text-center dark:bg-primary-600 dark:hover:bg-primary-700 dark:focus:ring-primary-800 disabled:opacity-70"
+                className="w-full text-white bg-blue-800 hover:bg-blue-900 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-xl text-sm px-5 py-3 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800 disabled:opacity-70"
               >
                 {submitting ? "Creating..." : "Create an account"}
               </button>
@@ -217,10 +278,7 @@ const Register = () => {
               {/* Helper login link */}
               <p className="text-sm font-light text-gray-500 dark:text-gray-400">
                 Already have an account?{" "}
-                <Link
-                  to="/login"
-                  className="font-medium text-primary-600 hover:underline"
-                >
+                <Link to="/login" className="font-medium text-primary-600 hover:underline">
                   Login here
                 </Link>
               </p>
